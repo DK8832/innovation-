@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --canvas: #f6f1e8;
+      --panel: #fffdfa;
+      --ink: #10182d;
+      --muted: #687087;
+      --line: #ded8ce;
+      --blue: #1957d2;
+      --blue-soft: #dfeaff;
+      --green: #16724b;
+      --green-soft: #dff4e8;
+      --red: #b52b39;
+      --red-soft: #fde4e7;
+      --amber: #936516;
+      --amber-soft: #fff0c7;
+      --gray-soft: #e9eaf0;
+      --shadow: 0 16px 45px rgba(16, 24, 45, .10);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --canvas: #0b1020;
+        --panel: #121a2d;
+        --ink: #f6f7fb;
+        --muted: #a8b0c2;
+        --line: #2a344b;
+        --blue: #6695ff;
+        --blue-soft: #1d315e;
+        --green: #74d3a7;
+        --green-soft: #173b2e;
+        --red: #ff8f9c;
+        --red-soft: #4a2028;
+        --amber: #f2c66d;
+        --amber-soft: #463719;
+        --gray-soft: #283146;
+        --shadow: 0 18px 45px rgba(0, 0, 0, .28);
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--canvas);
+      color: var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+    button, textarea, input { font: inherit; }
+    .shell { width: min(100%, 920px); margin: 0 auto; padding: 18px; }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      min-height: 152px;
+      padding: 28px;
+      border-radius: 24px;
+      color: white;
+      background: linear-gradient(135deg, #0d1733 0%, #172a58 72%, #1957d2 100%);
+      box-shadow: var(--shadow);
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 240px;
+      height: 240px;
+      right: -105px;
+      top: -104px;
+      transform: rotate(32deg);
+      background: rgba(61, 118, 255, .48);
+      border-radius: 38px;
+    }
+    .eyebrow { margin: 0 0 6px; color: #a9c4ff; font-size: 12px; font-weight: 800; letter-spacing: .16em; }
+    h1 { position: relative; z-index: 1; margin: 0; font-size: clamp(28px, 6vw, 45px); line-height: 1; letter-spacing: -.04em; }
+    .hero p:last-child { position: relative; z-index: 1; max-width: 600px; margin: 14px 0 0; color: #d9e3ff; }
+    .panel { margin-top: 16px; padding: 22px; border: 1px solid var(--line); border-radius: 22px; background: var(--panel); box-shadow: var(--shadow); }
+    .field + .field { margin-top: 16px; }
+    label { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 7px; font-size: 13px; font-weight: 750; }
+    label span { color: var(--muted); font-weight: 500; }
+    input, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      padding: 12px 13px;
+      color: var(--ink);
+      background: color-mix(in srgb, var(--panel) 92%, var(--canvas));
+      outline: none;
+      resize: vertical;
+    }
+    input:focus, textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 18%, transparent); }
+    textarea { min-height: 125px; }
+    #reference { min-height: 155px; }
+    .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 18px; }
+    button {
+      min-height: 42px;
+      padding: 0 17px;
+      border: 0;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 760;
+    }
+    button:disabled { cursor: wait; opacity: .64; }
+    .primary { color: white; background: var(--blue); }
+    .secondary { color: var(--ink); background: var(--gray-soft); }
+    .note { margin: 0 0 0 auto; color: var(--muted); font-size: 12px; }
+    .error { margin-top: 14px; padding: 12px 14px; border-radius: 12px; color: var(--red); background: var(--red-soft); }
+    .results { margin-top: 16px; }
+    .result-head { display: flex; align-items: end; justify-content: space-between; gap: 14px; margin-bottom: 12px; }
+    .result-head h2 { margin: 0; font-size: 24px; letter-spacing: -.03em; }
+    .result-head p { margin: 0; color: var(--muted); font-size: 12px; }
+    .metrics { display: grid; grid-template-columns: repeat(5, 1fr); gap: 9px; }
+    .metric { min-width: 0; padding: 13px; border: 1px solid var(--line); border-radius: 15px; background: var(--panel); }
+    .metric span { display: block; color: var(--muted); font-size: 11px; white-space: nowrap; }
+    .metric strong { display: block; margin-top: 4px; font-size: 21px; }
+    .answer-box { margin-top: 12px; padding: 18px; border-radius: 17px; background: #0d1733; color: #f8faff; white-space: pre-wrap; }
+    mark { padding: 1px 3px; border-radius: 5px; color: inherit; }
+    mark.supported { background: rgba(52, 191, 126, .35); }
+    mark.contradicted { background: rgba(255, 82, 102, .48); }
+    mark.insufficient { background: rgba(240, 181, 62, .40); }
+    mark.unverifiable { background: rgba(167, 177, 199, .32); }
+    .claim-list { display: grid; gap: 9px; margin-top: 12px; }
+    details { border: 1px solid var(--line); border-radius: 16px; background: var(--panel); }
+    summary { padding: 15px 17px; cursor: pointer; list-style: none; }
+    summary::-webkit-details-marker { display: none; }
+    .claim-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .claim-id { color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .1em; }
+    .verdict { padding: 4px 9px; border-radius: 999px; font-size: 11px; font-weight: 800; }
+    .verdict.supported { color: var(--green); background: var(--green-soft); }
+    .verdict.contradicted { color: var(--red); background: var(--red-soft); }
+    .verdict.insufficient { color: var(--amber); background: var(--amber-soft); }
+    .verdict.unverifiable { color: var(--muted); background: var(--gray-soft); }
+    .claim-text { margin: 8px 0 0; font-weight: 700; }
+    .claim-detail { padding: 0 17px 17px; border-top: 1px solid var(--line); }
+    .rationale { margin: 14px 0; }
+    .evidence { margin-top: 9px; padding: 12px 13px; border-left: 3px solid var(--blue); border-radius: 5px 12px 12px 5px; background: var(--blue-soft); }
+    .evidence strong { display: block; margin-bottom: 4px; font-size: 12px; }
+    .evidence p { margin: 0; font-size: 13px; }
+    .confidence { margin: 12px 0 0; color: var(--muted); font-size: 12px; }
+    .warning { margin-top: 12px; padding: 13px 15px; border: 1px dashed var(--line); border-radius: 13px; color: var(--muted); font-size: 12px; }
+    [hidden] { display: none !important; }
+    @media (max-width: 720px) {
+      .shell { padding: 10px; }
+      .hero, .panel { border-radius: 18px; }
+      .hero { padding: 22px; }
+      .panel { padding: 16px; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .note { width: 100%; margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <p class="eyebrow">DOCUMENT-GROUNDED CHECK</p>
+      <h1>FactLens</h1>
+      <p>AI 답변을 주장 단위로 나누고, 제공한 기준 문서와 수치·날짜·표현을 비교합니다.</p>
+    </header>
+
+    <section class="panel" aria-label="검사 입력">
+      <div class="field">
+        <label for="question">원래 질문 <span>선택</span></label>
+        <input id="question" maxlength="10000" placeholder="예: 세종대왕의 생애를 알려줘.">
+      </div>
+      <div class="field">
+        <label for="answer">검증할 AI 답변 <span id="answer-count">0자</span></label>
+        <textarea id="answer" maxlength="50000" placeholder="검증할 답변을 붙여넣으세요."></textarea>
+      </div>
+      <div class="field">
+        <label for="reference">기준 문서 <span id="reference-count">0자</span></label>
+        <textarea id="reference" maxlength="200000" placeholder="비교 기준이 되는 신뢰할 수 있는 문서를 붙여넣으세요."></textarea>
+      </div>
+      <div class="actions">
+        <button class="primary" id="verify" type="button">할루시네이션 검사</button>
+        <button class="secondary" id="sample" type="button">예시 채우기</button>
+        <button class="secondary" id="reset" type="button">초기화</button>
+        <p class="note">외부 전송 없이 로컬 Python에서 분석합니다.</p>
+      </div>
+      <div id="error" class="error" role="alert" hidden></div>
+    </section>
+
+    <section id="results" class="results" aria-live="polite" hidden>
+      <div class="result-head">
+        <h2>검사 결과</h2>
+        <p id="checked-at"></p>
+      </div>
+      <div id="metrics" class="metrics"></div>
+      <div id="highlight" class="answer-box"></div>
+      <div id="claim-list" class="claim-list"></div>
+      <div id="warning" class="warning"></div>
+    </section>
+  </main>
+
+  <script>
+    const labels = {
+      SUPPORTED: "근거 있음",
+      CONTRADICTED: "근거와 모순",
+      INSUFFICIENT: "근거 부족",
+      UNVERIFIABLE: "검증 불가",
+    };
+    const pending = new Map();
+    let nextId = 1;
+    let latestInput = null;
+
+    const question = document.getElementById("question");
+    const answer = document.getElementById("answer");
+    const reference = document.getElementById("reference");
+    const verifyButton = document.getElementById("verify");
+    const errorBox = document.getElementById("error");
+    const results = document.getElementById("results");
+
+    function request(method, params) {
+      const id = nextId++;
+      window.parent.postMessage({ jsonrpc: "2.0", id, method, params }, "*");
+      return new Promise((resolve, reject) => pending.set(id, { resolve, reject }));
+    }
+
+    async function callTool(name, args) {
+      if (window.openai?.callTool) return window.openai.callTool(name, args);
+      return request("tools/call", { name, arguments: args });
+    }
+
+    window.addEventListener("message", (event) => {
+      if (event.source !== window.parent) return;
+      const message = event.data;
+      if (!message || message.jsonrpc !== "2.0") return;
+      if (message.id !== undefined && pending.has(message.id)) {
+        const item = pending.get(message.id);
+        pending.delete(message.id);
+        if (message.error) item.reject(message.error);
+        else item.resolve(message.result);
+        return;
+      }
+      if (message.method === "ui/notifications/tool-input") {
+        latestInput = message.params || null;
+        hydrateInput(latestInput);
+      }
+      if (message.method === "ui/notifications/tool-result") {
+        renderEnvelope(message.params?.structuredContent);
+      }
+    }, { passive: true });
+
+    function hydrateInput(input) {
+      if (!input) return;
+      if (typeof input.question === "string") question.value = input.question;
+      if (typeof input.answer === "string") answer.value = input.answer;
+      const first = Array.isArray(input.reference_texts) ? input.reference_texts[0] : null;
+      if (first?.text) reference.value = first.text;
+      updateCounts();
+    }
+
+    function renderEnvelope(envelope) {
+      if (!envelope || envelope.view === "form") return;
+      if (envelope.view === "result" && envelope.result) renderResult(envelope.result);
+    }
+
+    verifyButton.addEventListener("click", async () => {
+      errorBox.hidden = true;
+      const answerText = answer.value.trim();
+      const referenceText = reference.value.trim();
+      if (!answerText || !referenceText) {
+        showError("검증할 AI 답변과 기준 문서를 모두 입력해 주세요.");
+        return;
+      }
+      verifyButton.disabled = true;
+      verifyButton.textContent = "검사 중…";
+      try {
+        const response = await callTool("verify_answer", {
+          question: question.value,
+          answer: answerText,
+          reference_texts: [{ title: "사용자 기준 문서", text: referenceText }],
+          as_of: new Date().toISOString().slice(0, 10),
+        });
+        renderEnvelope(response?.structuredContent);
+      } catch (error) {
+        showError(error?.message || error?.data?.message || "검사 도구를 실행하지 못했습니다.");
+      } finally {
+        verifyButton.disabled = false;
+        verifyButton.textContent = "할루시네이션 검사";
+      }
+    });
+
+    document.getElementById("sample").addEventListener("click", () => {
+      question.value = "세종대왕의 생애와 훈민정음 반포에 대해 알려줘.";
+      answer.value = "세종대왕은 1398년에 태어났다. 세종대왕은 1446년에 훈민정음을 반포했다. 훈민정음은 세상에서 가장 아름다운 문자라고 생각한다.";
+      reference.value = "세종대왕은 1397년 5월 15일에 태어났다. 세종은 조선의 제4대 국왕이다. 훈민정음은 1443년에 창제되었고 1446년에 반포되었다.";
+      updateCounts();
+    });
+
+    document.getElementById("reset").addEventListener("click", () => {
+      question.value = "";
+      answer.value = "";
+      reference.value = "";
+      results.hidden = true;
+      errorBox.hidden = true;
+      updateCounts();
+      answer.focus();
+    });
+
+    answer.addEventListener("input", updateCounts);
+    reference.addEventListener("input", updateCounts);
+
+    function updateCounts() {
+      document.getElementById("answer-count").textContent = `${answer.value.length.toLocaleString("ko-KR")}자`;
+      document.getElementById("reference-count").textContent = `${reference.value.length.toLocaleString("ko-KR")}자`;
+    }
+
+    function showError(message) {
+      errorBox.textContent = String(message);
+      errorBox.hidden = false;
+    }
+
+    function renderResult(data) {
+      const s = data.summary || {};
+      const percent = (value) => value == null ? "—" : `${Math.round(value * 100)}%`;
+      const values = [
+        ["검증 주장", `${s.total_claims ?? 0}개`],
+        ["지원율", percent(s.support_rate)],
+        ["모순율", percent(s.contradiction_rate)],
+        ["근거 범위", percent(s.evidence_coverage)],
+        ["초기 위험도", percent(s.risk)],
+      ];
+      const metrics = document.getElementById("metrics");
+      metrics.replaceChildren(...values.map(([label, value]) => {
+        const card = el("div", "metric");
+        card.append(el("span", "", label), el("strong", "", value));
+        return card;
+      }));
+
+      renderHighlight(data.answer || "", data.claims || []);
+      renderClaims(data.claims || [], data.evidence || []);
+      document.getElementById("checked-at").textContent = `${data.as_of || ""} · pipeline ${data.pipeline_version || ""}`;
+      document.getElementById("warning").textContent = (data.warnings || []).join(" ") || "제공된 문서와의 일치성 검사 결과입니다.";
+      results.hidden = false;
+      results.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function renderHighlight(text, claims) {
+      const box = document.getElementById("highlight");
+      box.replaceChildren();
+      let cursor = 0;
+      [...claims].sort((a, b) => a.claim.start - b.claim.start).forEach((item) => {
+        const start = Math.max(cursor, item.claim.start);
+        const end = Math.max(start, item.claim.end);
+        if (start > cursor) box.append(document.createTextNode(text.slice(cursor, start)));
+        const mark = el("mark", String(item.label || "").toLowerCase(), text.slice(start, end));
+        mark.title = labels[item.label] || item.label;
+        box.append(mark);
+        cursor = end;
+      });
+      if (cursor < text.length) box.append(document.createTextNode(text.slice(cursor)));
+    }
+
+    function renderClaims(claims, evidence) {
+      const evidenceMap = new Map(evidence.map((item) => [item.evidence_id, item]));
+      const cards = claims.map((item, index) => {
+        const details = document.createElement("details");
+        if (index === 0 || item.label === "CONTRADICTED") details.open = true;
+        const summary = document.createElement("summary");
+        const top = el("div", "claim-top");
+        top.append(
+          el("span", "claim-id", `CLAIM ${String(index + 1).padStart(2, "0")}`),
+          el("span", `verdict ${String(item.label).toLowerCase()}`, labels[item.label] || item.label),
+        );
+        summary.append(top, el("p", "claim-text", item.claim.exact_quote));
+        const detail = el("div", "claim-detail");
+        detail.append(el("p", "rationale", item.rationale));
+        (item.evidence_ids || []).forEach((id) => {
+          const source = evidenceMap.get(id);
+          if (!source) return;
+          const card = el("div", "evidence");
+          card.append(
+            el("strong", "", `${source.title} · 관련도 ${Math.round(source.score * 100)}%`),
+            el("p", "", source.text),
+          );
+          detail.append(card);
+        });
+        if (!(item.evidence_ids || []).length) detail.append(el("p", "confidence", "표시할 직접 근거가 없습니다."));
+        detail.append(el("p", "confidence", `판정 신뢰도 ${Math.round(item.confidence * 100)}% · 중요도 ${item.claim.importance}`));
+        details.append(summary, detail);
+        return details;
+      });
+      document.getElementById("claim-list").replaceChildren(...cards);
+    }
+
+    function el(tag, className = "", text = "") {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== "") node.textContent = text;
+      return node;
+    }
+
+    hydrateInput(window.openai?.toolInput || latestInput);
+    renderEnvelope(window.openai?.toolOutput);
+    updateCounts();
+  </script>
+</body>
+</html>

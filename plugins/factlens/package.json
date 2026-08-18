@@ -1,0 +1,20 @@
+{
+  "name": "factlens-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local MCP Apps server for the FactLens Codex plugin",
+  "scripts": {
+    "build": "esbuild server.mjs --bundle --platform=node --format=esm --outfile=dist/server.mjs",
+    "start": "node dist/server.mjs",
+    "start:http": "node scripts/start_http.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/ext-apps": "1.7.5",
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12"
+  }
+}

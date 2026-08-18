@@ -1,0 +1,20 @@
+{
+  "name": "factlens-share",
+  "interface": {
+    "displayName": "FactLens Shared"
+  },
+  "plugins": [
+    {
+      "name": "factlens",
+      "source": {
+        "source": "local",
+        "path": "./plugins/factlens"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

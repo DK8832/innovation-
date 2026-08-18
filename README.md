@@ -43,4 +43,4 @@ FactLens는 검색기가 아닙니다. Codex가 웹, 작업공간 파일 또는 
 - Docker 실행 설정: `plugins/factlens/Dockerfile`
 - 공개 제출 준비: `plugins/factlens/PUBLICATION.md`
 
-개발 검사를 실행하려면 `plugins/factlens`에서 먼저 `pnpm install`을 실행합니다. 일반적인 Codex 사용에는 `node_modules`가 필요하지 않으며, 번들된 `dist/server.mjs`가 사용됩니다.
+GitHub 소스 체크아웃에서는 `plugins/factlens`로 이동해 `pnpm install --frozen-lockfile`과 `pnpm run build`를 먼저 실행합니다. 해커톤 제출용 공유 ZIP에는 빌드가 완료된 `dist/server.mjs`가 포함되어 있어 별도 `node_modules` 설치 없이 실행할 수 있습니다.
